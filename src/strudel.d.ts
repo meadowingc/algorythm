@@ -5,6 +5,11 @@ declare module '@strudel/web' {
   export function defaultPrebake(): Promise<void>;
   export function getAudioContext(): AudioContext;
   export function samples(source: string | Record<string, unknown>): Promise<void>;
+  export function getSound(s: string): { onTrigger: unknown; data: { samples: unknown } } | undefined;
+  export function getSampleBuffer(
+    hapValue: Record<string, unknown>,
+    bank: unknown,
+  ): Promise<{ buffer: AudioBuffer; playbackRate: number }>;
 }
 
 declare module '@strudel/core' {

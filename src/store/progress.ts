@@ -10,6 +10,7 @@ interface GameProgress {
 }
 
 const STORAGE_KEY = 'algorythm_progress';
+const CODE_STORAGE_KEY = 'algorythm_code';
 
 function load(): GameProgress {
   try {
@@ -21,6 +22,26 @@ function load(): GameProgress {
 
 function save(progress: GameProgress): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+}
+
+export function getUserCode(levelId: string): string | null {
+  try {
+    const raw = localStorage.getItem(CODE_STORAGE_KEY);
+    if (raw) {
+      const codes = JSON.parse(raw) as Record<string, string>;
+      return codes[levelId] ?? null;
+    }
+  } catch { /* ignore corrupt data */ }
+  return null;
+}
+
+export function saveUserCode(levelId: string, code: string): void {
+  try {
+    const raw = localStorage.getItem(CODE_STORAGE_KEY);
+    const codes = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    codes[levelId] = code;
+    localStorage.setItem(CODE_STORAGE_KEY, JSON.stringify(codes));
+  } catch { /* ignore */ }
 }
 
 export function useProgress() {

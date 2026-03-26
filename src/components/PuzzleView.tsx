@@ -1,28 +1,38 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { LevelDef } from '../levels';
-import { playCode, stopPlayback, ensureInit } from '../engine/strudel';
+import { playCode, stopPlayback, ensureInit, preloadSounds } from '../engine/strudel';
 import { evaluatePuzzle, type EvalResult } from '../engine/evaluate';
+import { getUserCode, saveUserCode } from '../store/progress';
 import Editor from './Editor';
 
 interface PuzzleViewProps {
   level: LevelDef;
   onComplete: (score: number) => void;
   onBack: () => void;
+  onNext?: () => void;
+  nextLevelTitle?: string;
 }
 
-export default function PuzzleView({ level, onComplete, onBack }: PuzzleViewProps) {
-  const [, setCode] = useState(level.starterCode);
+export default function PuzzleView({ level, onComplete, onBack, onNext, nextLevelTitle }: PuzzleViewProps) {
+  const savedCode = getUserCode(level.id) ?? level.starterCode;
+  const [, setCode] = useState(savedCode);
   const [result, setResult] = useState<EvalResult | null>(null);
   const [playing, setPlaying] = useState(false);
   const [playingTarget, setPlayingTarget] = useState(false);
   const [hintIndex, setHintIndex] = useState(-1);
   const [initDone, setInitDone] = useState(false);
-  const codeRef = useRef(level.starterCode);
+  const codeRef = useRef(savedCode);
+
+  // Preload samples for this level on mount
+  useEffect(() => {
+    preloadSounds(level.targetCode);
+  }, [level.targetCode]);
 
   const handleCodeChange = useCallback((newCode: string) => {
     codeRef.current = newCode;
     setCode(newCode);
-  }, []);
+    saveUserCode(level.id, newCode);
+  }, [level.id]);
 
   const handleInit = useCallback(async () => {
     if (initDone) return;
@@ -119,16 +129,16 @@ export default function PuzzleView({ level, onComplete, onBack }: PuzzleViewProp
   };
 
   const typeLabel: Record<string, string> = {
-    completion: 'Pattern Completion',
-    recreate: 'Recreate',
-    freeform: 'Free Creation',
+    completion: 'fill',
+    recreate: 'recreate',
+    freeform: 'free',
   };
 
   return (
     <div className="puzzle-view">
       <header className="puzzle-header">
         <button className="btn btn-ghost" onClick={onBack}>
-          ← Back
+          &lt;- back
         </button>
         <div className="puzzle-title-area">
           <span className="puzzle-type-badge">{typeLabel[level.type]}</span>
@@ -146,7 +156,7 @@ export default function PuzzleView({ level, onComplete, onBack }: PuzzleViewProp
                 className={`btn btn-secondary ${playingTarget ? 'active' : ''}`}
                 onClick={playingTarget ? handleStop : handlePlayTarget}
               >
-                {playingTarget ? '⏹ Stop Target' : '🎧 Listen to Target'}
+                {playingTarget ? '[] stop' : '> listen to target'}
               </button>
             </div>
           )}
@@ -155,7 +165,7 @@ export default function PuzzleView({ level, onComplete, onBack }: PuzzleViewProp
             <div className="hints-area">
               {level.hints.slice(0, hintIndex + 1).map((hint, i) => (
                 <p key={i} className="hint">
-                  💡 {hint}
+                  {hint}
                 </p>
               ))}
             </div>
@@ -163,7 +173,7 @@ export default function PuzzleView({ level, onComplete, onBack }: PuzzleViewProp
 
           {hintIndex < level.hints.length - 1 && (
             <button className="btn btn-ghost hint-btn" onClick={showNextHint}>
-              Need a hint? ({level.hints.length - hintIndex - 1} remaining)
+              hint? ({level.hints.length - hintIndex - 1} remaining)
             </button>
           )}
 
@@ -171,13 +181,26 @@ export default function PuzzleView({ level, onComplete, onBack }: PuzzleViewProp
             <div className={`result-card ${result.pass ? 'result-pass' : 'result-fail'}`}>
               <p className="result-feedback">{result.feedback}</p>
               {result.pass && <p className="result-score">Score: {result.score}%</p>}
+              {result.pass && (
+                <div className="result-actions">
+                  {onNext ? (
+                    <button className="btn btn-primary" onClick={onNext}>
+                      next: {nextLevelTitle} -&gt;
+                    </button>
+                  ) : (
+                    <button className="btn btn-primary" onClick={onBack}>
+                      back to levels
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </aside>
 
         <main className="puzzle-editor-area">
           <Editor
-            initialCode={level.starterCode}
+            initialCode={savedCode}
             onChange={handleCodeChange}
             onRun={handleRun}
           />
@@ -187,10 +210,10 @@ export default function PuzzleView({ level, onComplete, onBack }: PuzzleViewProp
               className={`btn btn-primary ${playing ? 'active' : ''}`}
               onClick={playing ? handleStop : handlePlay}
             >
-              {playing ? '⏹ Stop' : '▶ Play'}
+              {playing ? '[] stop' : '> play'}
             </button>
             <button className="btn btn-accent" onClick={handleCheck}>
-              ✓ Check
+              check
             </button>
             <span className="editor-hint">
               <kbd>Ctrl+Enter</kbd> play · <kbd>Ctrl+.</kbd> stop · <kbd>Ctrl+Shift+Enter</kbd> target

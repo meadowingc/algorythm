@@ -1,4 +1,4 @@
-import { initStrudel, evaluate, hush, getAudioContext, samples } from '@strudel/web';
+import { initStrudel, evaluate, hush, getAudioContext, samples, getSound, getSampleBuffer } from '@strudel/web';
 
 let initPromise: Promise<unknown> | null = null;
 
@@ -54,6 +54,39 @@ export async function playCode(code: string): Promise<unknown> {
 /** Stop all playback. */
 export function stopPlayback(): void {
   hush();
+}
+
+/**
+ * Preload all sample buffers that a piece of Strudel code will need.
+ * Evaluates the code silently, extracts the sound names from the events,
+ * then fetches + decodes the audio files into superdough's buffer cache.
+ */
+export async function preloadSounds(code: string): Promise<void> {
+  try {
+    const pattern = await evaluateCode(code);
+    const events = extractEvents(pattern);
+    const seen = new Set<string>();
+
+    const loads: Promise<unknown>[] = [];
+    for (const ev of events) {
+      const s = String(ev.value.s ?? ev.value.sound ?? '');
+      if (!s) continue;
+      const n = Number(ev.value.n ?? 0);
+      const key = `${s}:${n}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const sound = getSound(s);
+      if (sound?.data?.samples) {
+        loads.push(
+          getSampleBuffer({ s, n, speed: 1 }, sound.data.samples).catch(() => {}),
+        );
+      }
+    }
+    await Promise.all(loads);
+  } catch {
+    // Preloading is best-effort; don't block or error the UI
+  }
 }
 
 /**

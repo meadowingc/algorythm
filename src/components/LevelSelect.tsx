@@ -20,7 +20,7 @@ export default function LevelSelect({
           <span className="logo-algo">algo</span>
           <span className="logo-rythm">rythm</span>
         </h1>
-        <p className="tagline">Learn to code music. One puzzle at a time.</p>
+        <p className="tagline">learn to code music // one puzzle at a time</p>
       </header>
 
       <div className="chapters">
@@ -49,7 +49,7 @@ export default function LevelSelect({
 
               {!unlocked && (
                 <p className="locked-msg">
-                  🔒 Complete 3 levels from the previous chapter to unlock
+                  // complete 3 levels from the previous chapter to unlock
                 </p>
               )}
 
@@ -58,12 +58,12 @@ export default function LevelSelect({
                   {chapterLevels.map((level) => {
                     const done = isCompleted(level.id);
                     const score = getBestScore(level.id);
-                    const typeIcon =
+                    const typeTag =
                       level.type === 'completion'
-                        ? '📝'
+                        ? 'fill'
                         : level.type === 'recreate'
-                          ? '🎧'
-                          : '🎨';
+                          ? 'ear'
+                          : 'free';
 
                     return (
                       <button
@@ -71,9 +71,8 @@ export default function LevelSelect({
                         className={`level-card ${done ? 'level-done' : ''}`}
                         onClick={() => onSelectLevel(level.id)}
                       >
-                        <span className="level-icon">{typeIcon}</span>
                         <span className="level-num">
-                          {level.chapter}-{level.levelInChapter}
+                          {level.chapter}.{level.levelInChapter} {typeTag}
                         </span>
                         <span className="level-title">{level.title}</span>
                         {done && (

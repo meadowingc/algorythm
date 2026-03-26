@@ -49,16 +49,16 @@ function compareEvents(
   }
 
   const total = Math.max(target.length, player.length);
-  if (total === 0) return { matched: 0, total: 0, feedback: 'No events found' };
+  if (total === 0) return { matched: 0, total: 0, feedback: 'no events found' };
 
   const pct = Math.round((matched / total) * 100);
   let feedback = '';
   if (matched === total && target.length === player.length) {
-    feedback = 'Perfect match!';
+    feedback = 'perfect match.';
   } else if (pct >= 80) {
-    feedback = `Close! ${matched}/${target.length} events matched (${pct}%).`;
+    feedback = `close — ${matched}/${target.length} events matched (${pct}%)`;
   } else {
-    feedback = `${matched}/${target.length} events matched. Your pattern has ${player.length} events, target has ${target.length}.`;
+    feedback = `${matched}/${target.length} events matched. yours: ${player.length}, target: ${target.length}`;
   }
   return { matched, total, feedback };
 }
@@ -74,7 +74,7 @@ function checkConstraints(
   if (constraints.requiredStrings) {
     for (const s of constraints.requiredStrings) {
       if (!code.includes(s)) {
-        issues.push(`Your code must include "${s}"`);
+        issues.push(`code must include "${s}"`);;
       }
     }
   }
@@ -82,21 +82,21 @@ function checkConstraints(
   if (constraints.forbiddenStrings) {
     for (const s of constraints.forbiddenStrings) {
       if (code.includes(s)) {
-        issues.push(`Your code must not include "${s}"`);
+        issues.push(`code must not include "${s}"`);;
       }
     }
   }
 
   if (constraints.maxChars && code.length > constraints.maxChars) {
-    issues.push(`Code must be ${constraints.maxChars} characters or fewer (currently ${code.length})`);
+    issues.push(`code must be ${constraints.maxChars} chars or fewer (${code.length})`);
   }
 
   if (constraints.minEvents && playerEvents.length < constraints.minEvents) {
-    issues.push(`Pattern must have at least ${constraints.minEvents} events (currently ${playerEvents.length})`);
+    issues.push(`need at least ${constraints.minEvents} events (have ${playerEvents.length})`);
   }
 
   if (constraints.maxEvents && playerEvents.length > constraints.maxEvents) {
-    issues.push(`Pattern must have at most ${constraints.maxEvents} events (currently ${playerEvents.length})`);
+    issues.push(`max ${constraints.maxEvents} events allowed (have ${playerEvents.length})`);
   }
 
   return {
@@ -112,7 +112,7 @@ export async function evaluatePuzzle(
 ): Promise<EvalResult> {
   const trimmed = playerCode.trim();
   if (!trimmed) {
-    return { pass: false, score: 0, feedback: 'Write some code first!' };
+    return { pass: false, score: 0, feedback: 'write some code first' };
   }
 
   // Evaluate player code
@@ -121,7 +121,7 @@ export async function evaluatePuzzle(
     playerPattern = await evaluateCode(trimmed);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    return { pass: false, score: 0, feedback: `Code error: ${msg}` };
+    return { pass: false, score: 0, feedback: `error: ${msg}` };
   }
 
   const cycles = level.cycles ?? 1;
@@ -131,7 +131,7 @@ export async function evaluatePuzzle(
   try {
     playerEvents = extractEvents(playerPattern, cycles);
   } catch {
-    return { pass: false, score: 0, feedback: 'Could not extract events from your pattern.' };
+    return { pass: false, score: 0, feedback: 'could not extract events from pattern' };
   }
 
   // Check constraints
@@ -143,12 +143,12 @@ export async function evaluatePuzzle(
   // For freeform puzzles, constraints are enough
   if (level.type === 'freeform') {
     if (playerEvents.length === 0) {
-      return { pass: false, score: 0, feedback: 'Your pattern produces no sounds. Add some notes or sounds!' };
+      return { pass: false, score: 0, feedback: 'pattern produces no sounds — add notes or sounds' };
     }
     return {
       pass: true,
       score: 100,
-      feedback: 'Great work! Your creation passes all constraints. 🎵',
+      feedback: 'your creation passes all constraints.',
       playerEvents,
     };
   }
@@ -158,14 +158,14 @@ export async function evaluatePuzzle(
   try {
     targetPattern = await evaluateCode(level.targetCode);
   } catch {
-    return { pass: false, score: 0, feedback: 'Internal error evaluating target.' };
+    return { pass: false, score: 0, feedback: 'internal error evaluating target' };
   }
 
   let targetEvents: HapEvent[];
   try {
     targetEvents = extractEvents(targetPattern, cycles);
   } catch {
-    return { pass: false, score: 0, feedback: 'Internal error extracting target events.' };
+    return { pass: false, score: 0, feedback: 'internal error extracting target events' };
   }
 
   const comparison = compareEvents(targetEvents, playerEvents);
@@ -175,7 +175,7 @@ export async function evaluatePuzzle(
   return {
     pass,
     score,
-    feedback: pass ? '✅ ' + comparison.feedback : comparison.feedback,
+    feedback: pass ? comparison.feedback : comparison.feedback,
     playerEvents,
     targetEvents,
   };
