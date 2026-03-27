@@ -1,9 +1,31 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import type { LevelDef } from '../levels';
-import { playCode, stopPlayback, ensureInit, preloadSounds } from '../engine/strudel';
+import { playCode, stopPlayback, ensureInit, preloadSounds, tryLiveReload, getActiveLocations } from '../engine/strudel';
 import { evaluatePuzzle, type EvalResult } from '../engine/evaluate';
 import { getUserCode, saveUserCode } from '../store/progress';
-import Editor from './Editor';
+import Editor, { type EditorHandle } from './Editor';
+import Visualizer from './Visualizer';
+
+/** Render inline markdown: `code` and [text](url) */
+function renderInline(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  // Match `code` or [text](url)
+  const re = /`([^`]+)`|\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    if (match[1] != null) {
+      parts.push(<code key={key++}>{match[1]}</code>);
+    } else if (match[2] != null && match[3] != null) {
+      parts.push(<a key={key++} href={match[3]} target="_blank" rel="noopener noreferrer">{match[2]}</a>);
+    }
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
 
 interface PuzzleViewProps {
   level: LevelDef;
@@ -11,28 +33,63 @@ interface PuzzleViewProps {
   onBack: () => void;
   onNext?: () => void;
   nextLevelTitle?: string;
+  completedScore?: number;
 }
 
-export default function PuzzleView({ level, onComplete, onBack, onNext, nextLevelTitle }: PuzzleViewProps) {
+export default function PuzzleView({ level, onComplete, onBack, onNext, nextLevelTitle, completedScore }: PuzzleViewProps) {
   const savedCode = getUserCode(level.id) ?? level.starterCode;
   const [, setCode] = useState(savedCode);
-  const [result, setResult] = useState<EvalResult | null>(null);
+  const [result, setResult] = useState<EvalResult | null>(
+    completedScore != null
+      ? { pass: true, score: completedScore, feedback: 'completed.' }
+      : null,
+  );
   const [playing, setPlaying] = useState(false);
   const [playingTarget, setPlayingTarget] = useState(false);
   const [hintIndex, setHintIndex] = useState(-1);
   const [initDone, setInitDone] = useState(false);
+  const [showViz, setShowViz] = useState(false);
   const codeRef = useRef(savedCode);
+  const editorRef = useRef<EditorHandle>(null);
 
   // Preload samples for this level on mount
   useEffect(() => {
     preloadSounds(level.targetCode);
+    return () => stopPlayback();
   }, [level.targetCode]);
+
+  // Active code highlighting RAF loop
+  const highlightRafRef = useRef(0);
+  useEffect(() => {
+    if (!playing && !playingTarget) {
+      editorRef.current?.setHighlights([]);
+      return;
+    }
+    const tick = () => {
+      editorRef.current?.setHighlights(getActiveLocations());
+      highlightRafRef.current = requestAnimationFrame(tick);
+    };
+    highlightRafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(highlightRafRef.current);
+  }, [playing, playingTarget]);
 
   const handleCodeChange = useCallback((newCode: string) => {
     codeRef.current = newCode;
     setCode(newCode);
     saveUserCode(level.id, newCode);
   }, [level.id]);
+
+  // Live-reload: debounce re-evaluation while playing
+  const liveTimerRef = useRef<ReturnType<typeof setTimeout>>(0 as unknown as ReturnType<typeof setTimeout>);
+  useEffect(() => {
+    if (!playing) return;
+    clearTimeout(liveTimerRef.current);
+    liveTimerRef.current = setTimeout(async () => {
+      const ok = await tryLiveReload(codeRef.current);
+      if (ok) setResult(null);
+    }, 300);
+    return () => clearTimeout(liveTimerRef.current);
+  });
 
   const handleInit = useCallback(async () => {
     if (initDone) return;
@@ -148,7 +205,7 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
 
       <div className="puzzle-body">
         <aside className="puzzle-instructions">
-          <p className="puzzle-description">{level.description}</p>
+          <p className="puzzle-description">{renderInline(level.description)}</p>
 
           {level.type !== 'freeform' && (
             <div className="target-controls">
@@ -200,10 +257,13 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
 
         <main className="puzzle-editor-area">
           <Editor
+            ref={editorRef}
             initialCode={savedCode}
             onChange={handleCodeChange}
             onRun={handleRun}
           />
+
+          <Visualizer active={showViz && (playing || playingTarget)} />
 
           <div className="editor-controls">
             <button
@@ -214,6 +274,12 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
             </button>
             <button className="btn btn-accent" onClick={handleCheck}>
               check
+            </button>
+            <button
+              className={`btn btn-ghost viz-toggle ${showViz ? 'viz-active' : ''}`}
+              onClick={() => setShowViz((v) => !v)}
+            >
+              {showViz ? '~ viz' : '> viz'}
             </button>
             <span className="editor-hint">
               <kbd>Ctrl+Enter</kbd> play · <kbd>Ctrl+.</kbd> stop · <kbd>Ctrl+Shift+Enter</kbd> target

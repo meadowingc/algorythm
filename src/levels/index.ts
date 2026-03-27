@@ -39,10 +39,10 @@ export const levels: LevelDef[] = [
     levelInChapter: 1,
     title: 'Your First Sound',
     description:
-      'Welcome! In Strudel, `sound()` plays a sound. Replace the `~` (silence) with `bd` to play a bass drum.',
+      'Welcome! In Strudel, `sound()` plays a sound. Replace the `~` (silence) with `bd` to play a bass drum. In this chapter we\'ll work with drum sounds only.',
     type: 'completion',
     targetCode: 'sound("bd")',
-    starterCode: '// sound() plays an audio sample by name\n// this code loops forever — one "cycle" every 2 seconds\n// ~ means silence (a rest). replace it with: bd\nsound("~")',
+    starterCode: '// sound() plays an audio sample by name\n// this code loops forever \u2014 one "cycle" every 2 seconds\n// ~ means silence (a rest). replace it with: bd\n// drum sounds: https://strudel.cc/workshop/first-sounds/#drum-sounds\n// cheat sheet: https://strudel.cc/workshop/recap/\nsound("~")',
     hints: ['Try typing: bd (short for bass drum)'],
     constraints: { requiredStrings: ['sound('] },
   },
@@ -52,10 +52,10 @@ export const levels: LevelDef[] = [
     levelInChapter: 2,
     title: 'A Simple Beat',
     description:
-      'Put multiple sounds in a sequence by separating them with spaces. Replace the `~` rests to create: kick, hi-hat, snare, hi-hat.',
+      'Put multiple sounds in a sequence by separating them with spaces. More sounds = each one plays faster to fit evenly in the same 2-second cycle. Replace the `~` rests using these sounds: `bd` (kick), `hh` (hi-hat), `sd` (snare).',
     type: 'completion',
     targetCode: 'sound("bd hh sd hh")',
-    starterCode: '// spaces separate sounds — they split the cycle equally\n// 4 sounds = each gets 0.5s of a 2s cycle\n// ~ = rest (silence). replace each ~ with a sound\n// drum sounds: bd=kick, sd=snare, hh=hihat, oh=open hihat\nsound("bd ~ sd ~")',
+    starterCode: '// spaces separate sounds \u2014 they split the cycle equally\n// 4 sounds = each gets 0.5s of a 2s cycle\n// ~ = rest (silence). replace each ~ with a sound\n// you need: bd (kick), hh (hihat), sd (snare)\nsound("bd ~ sd ~")',
     hints: [
       'hh is short for hi-hat',
       'Sounds inside the quotes are separated by spaces',
@@ -98,21 +98,17 @@ export const levels: LevelDef[] = [
     id: 'beat-5',
     chapter: 1,
     levelInChapter: 5,
-    title: 'Make Your Beat',
+    title: 'Stack the Layers',
     description:
-      'Create your own drum loop! Use at least 4 sounds total, including `bd`, `sd`, and `hh`.',
-    type: 'freeform',
-    targetCode: 'sound("bd hh sd hh bd hh sd hh")',
-    starterCode: '// make your own beat! available drums:\n// bd=kick sd=snare hh=hihat oh=open hihat\n// rim=rimshot lt=low tom mt=mid tom ht=high tom\n// cp=clap cr=crash rd=ride\nsound("")',
+      'A comma `,` inside `sound()` stacks patterns so they play at the same time. Fill in the second layer to add `hh*4` on top of the kick and snare.',
+    type: 'completion',
+    targetCode: 'sound("bd sd bd sd, hh*4")',
+    starterCode: '// , stacks patterns — they play simultaneously\n// left of the comma: kick and snare backbone\n// right of the comma: hi-hat groove on top\n// replace the ~ with a hi-hat pattern\nsound("bd sd bd sd, ~")',
     hints: [
-      'Try: sound("bd hh sd hh")',
-      'You can use * to repeat: hh*2',
-      'Experiment until it sounds good!',
+      'The comma separates two layers inside one sound() call',
+      'hh*4 plays four hi-hats per cycle',
     ],
-    constraints: {
-      requiredStrings: ['bd', 'sd', 'hh'],
-      minEvents: 4,
-    },
+    constraints: { requiredStrings: ['sound(', ','] },
   },
 
   // ── Chapter 2: Finding Notes ───────────────────────────────
@@ -122,7 +118,7 @@ export const levels: LevelDef[] = [
     levelInChapter: 1,
     title: 'First Notes',
     description:
-      'Use `note()` to play pitched sounds. Replace the `~` rests to play C, E, G, B on piano.',
+      'Use `note()` to play pitched sounds. Replace the `~` rests to play C, E, G, B on piano. See the [notes workshop](https://strudel.cc/workshop/first-notes/) for more.',
     type: 'completion',
     targetCode: 'note("c e g b").sound("piano")',
     starterCode: '// note() plays pitched notes using letter names (a through g)\n// .sound("piano") chains an instrument — this is called "method chaining"\n// replace the ~ rests with note letters\nnote("c ~ g ~").sound("piano")',
@@ -138,7 +134,7 @@ export const levels: LevelDef[] = [
     levelInChapter: 2,
     title: 'Scale Degrees',
     description:
-      'Use `n()` with numbers and `.scale()` to play notes in a scale. Replace the `~` rests with scale degrees to make a rising pattern.',
+      'Use `n()` with numbers and `.scale()` to play notes in a scale. Replace the `~` rests with scale degrees to make a rising pattern. More on [notes & scales](https://strudel.cc/workshop/first-notes/).',
     type: 'completion',
     targetCode: 'n("0 2 4 6").scale("C:minor").sound("piano")',
     starterCode: '// n() uses numbers instead of note names\n// .scale(\"C:minor\") maps those numbers to notes in C minor\n// 0=root, 1=2nd, 2=3rd... \u2014 all guaranteed to sound good together\n// replace the ~ rests with scale degree numbers\nn(\"0 ~ 4 ~\").scale(\"C:minor\").sound(\"piano\")',
@@ -209,10 +205,10 @@ export const levels: LevelDef[] = [
     levelInChapter: 1,
     title: 'Low-Pass Filter',
     description:
-      'Effects change how sounds feel. Add `.lpf(800)` to the pattern to muffle the hi-hats.',
+      'Effects change how sounds feel. Add `.lpf(800)` to the pattern to muffle the hi-hats. See the [effects workshop](https://strudel.cc/workshop/first-effects/) for more.',
     type: 'completion',
     targetCode: 'sound("bd hh*4 sd hh*4").lpf(800)',
-    starterCode: '// effects are chained with .method(value)\n// .lpf(freq) = low-pass filter — removes high frequencies\n// lower number = more muffled. try .lpf(800)\nsound("bd hh*4 sd hh*4").???(???)',
+    starterCode: '// effects are chained with .method(value)\n// .lpf(freq) = low-pass filter \u2014 removes high frequencies\n// lower number = more muffled. try adding .lpf(800) at the end\nsound("bd hh*4 sd hh*4")',
     hints: [
       'lpf = low-pass filter — it cuts high frequencies',
       'Add .lpf(800) at the end',
@@ -225,10 +221,10 @@ export const levels: LevelDef[] = [
     levelInChapter: 2,
     title: 'Reverb Space',
     description:
-      'Add `.room(0.8)` after `.gain(0.7)` to add reverb to this melody.',
+      'Add `.room(0.8)` after `.gain(0.7)` to add reverb to this melody. More effects at the [effects workshop](https://strudel.cc/workshop/first-effects/).',
     type: 'completion',
     targetCode: 'note("c4 e4 g4 e4").sound("piano").gain(0.7).room(0.8)',
-    starterCode: '// .gain(0-1) = volume, .room(0-1) = reverb amount\n// chain as many effects as you want!\nnote("c4 e4 g4 e4").sound("piano").gain(0.7).???(???)',
+    starterCode: '// .gain(0-1) = volume, .room(0-1) = reverb amount\n// chain as many effects as you want!\n// add .room(0.8) after .gain(0.7)\nnote("c4 e4 g4 e4").sound("piano").gain(0.7)',
     hints: [
       'room() adds reverb — higher values = more spacious',
       'Add .room(0.8)',

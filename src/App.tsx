@@ -3,6 +3,7 @@ import { levels } from './levels';
 import { useProgress } from './store/progress';
 import LevelSelect from './components/LevelSelect';
 import PuzzleView from './components/PuzzleView';
+import Sandbox from './components/Sandbox';
 import './App.css';
 
 /** Read level id from current URL path (e.g. /level/beat-1 → "beat-1"). */
@@ -13,13 +14,21 @@ function levelIdFromPath(): string | null {
   return levels.some((l) => l.id === id) ? id : null;
 }
 
+function isJamPath(): boolean {
+  return window.location.pathname === '/jam';
+}
+
 export default function App() {
   const [currentLevelId, setCurrentLevelId] = useState<string | null>(levelIdFromPath);
+  const [showJam, setShowJam] = useState(isJamPath);
   const { isCompleted, getBestScore, markCompleted, isChapterUnlocked } = useProgress();
 
   // Sync with browser back/forward
   useEffect(() => {
-    const onPopState = () => setCurrentLevelId(levelIdFromPath());
+    const onPopState = () => {
+      setCurrentLevelId(levelIdFromPath());
+      setShowJam(isJamPath());
+    };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
@@ -40,7 +49,14 @@ export default function App() {
 
   const handleBack = useCallback(() => {
     setCurrentLevelId(null);
+    setShowJam(false);
     window.history.pushState(null, '', '/');
+  }, []);
+
+  const handleJam = useCallback(() => {
+    setShowJam(true);
+    setCurrentLevelId(null);
+    window.history.pushState(null, '', '/jam');
   }, []);
 
   const handleNext = useCallback(() => {
@@ -59,6 +75,10 @@ export default function App() {
     [currentLevelId, markCompleted],
   );
 
+  if (showJam) {
+    return <Sandbox onBack={handleBack} />;
+  }
+
   if (currentLevel) {
     return (
       <PuzzleView
@@ -68,6 +88,7 @@ export default function App() {
         onBack={handleBack}
         onNext={nextLevel ? handleNext : undefined}
         nextLevelTitle={nextLevel?.title}
+        completedScore={isCompleted(currentLevel.id) ? getBestScore(currentLevel.id) : undefined}
       />
     );
   }
@@ -75,6 +96,7 @@ export default function App() {
   return (
     <LevelSelect
       onSelectLevel={handleSelectLevel}
+      onJam={handleJam}
       isCompleted={isCompleted}
       getBestScore={getBestScore}
       isChapterUnlocked={isChapterUnlocked}

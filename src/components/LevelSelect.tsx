@@ -2,6 +2,7 @@ import { chapters, levels } from '../levels';
 
 interface LevelSelectProps {
   onSelectLevel: (levelId: string) => void;
+  onJam: () => void;
   isCompleted: (levelId: string) => boolean;
   getBestScore: (levelId: string) => number;
   isChapterUnlocked: (chapter: number) => boolean;
@@ -9,6 +10,7 @@ interface LevelSelectProps {
 
 export default function LevelSelect({
   onSelectLevel,
+  onJam,
   isCompleted,
   getBestScore,
   isChapterUnlocked,
@@ -20,7 +22,10 @@ export default function LevelSelect({
           <span className="logo-algo">algo</span>
           <span className="logo-rythm">rythm</span>
         </h1>
-        <p className="tagline">learn to code music // one puzzle at a time</p>
+        <p className="tagline">learn to code music with <a href="https://strudel.cc" target="_blank" rel="noopener noreferrer" className="tagline-link">strudel</a> // one puzzle at a time</p>
+        <button className="btn btn-accent jam-btn" onClick={onJam}>
+          &gt; jam mode
+        </button>
       </header>
 
       <div className="chapters">
@@ -87,6 +92,22 @@ export default function LevelSelect({
           );
         })}
       </div>
+
+      <footer className="about-section">
+        <h3>// about</h3>
+        <p>
+          algorythm is an interactive puzzle game for learning{' '}
+          <a href="https://strudel.cc" target="_blank" rel="noopener noreferrer">Strudel</a>,
+          a live coding language for music. solve puzzles by writing code that
+          produces the right sounds — no prior music or coding experience needed.
+        </p>
+        <p>
+          powered by{' '}
+          <a href="https://strudel.cc" target="_blank" rel="noopener noreferrer">Strudel</a>{' '}
+          by Alex McLean & contributors. built with curiosity.{' '}
+          <a href="https://github.com/meadowingc/algorythm" target="_blank" rel="noopener noreferrer">source on github</a>.
+        </p>
+      </footer>
     </div>
   );
 }

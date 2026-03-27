@@ -1,10 +1,44 @@
-import { useRef, useEffect, useCallback } from 'react';
-import { EditorView, keymap } from '@codemirror/view';
-import { EditorState, Prec } from '@codemirror/state';
+import { useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
+import { EditorView, keymap, Decoration, type DecorationSet } from '@codemirror/view';
+import { EditorState, Prec, StateField, StateEffect } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { basicSetup } from 'codemirror';
+
+/** A pair of [from, to] offsets to highlight. */
+export type HighlightRange = [number, number];
+
+/** Methods exposed to parent via ref. */
+export interface EditorHandle {
+  /** Set the currently active highlight ranges (call on each frame). */
+  setHighlights(ranges: HighlightRange[]): void;
+}
+
+// StateEffect to push new highlight ranges into the editor
+const setHighlightsEffect = StateEffect.define<HighlightRange[]>();
+
+const highlightMark = Decoration.mark({ class: 'cm-strudel-active' });
+
+const highlightsField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(value, tr) {
+    for (const e of tr.effects) {
+      if (e.is(setHighlightsEffect)) {
+        const docLen = tr.state.doc.length;
+        const marks = e.value
+          .filter(([from, to]) => from >= 0 && to > from && to <= docLen)
+          .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+          .map(([from, to]) => highlightMark.range(from, to));
+        return Decoration.set(marks);
+      }
+    }
+    return value;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 
 interface EditorProps {
   initialCode: string;
@@ -12,11 +46,22 @@ interface EditorProps {
   onRun?: (code: string) => void;
 }
 
-export default function Editor({ initialCode, onChange, onRun }: EditorProps) {
+const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
+  { initialCode, onChange, onRun },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onRunRef = useRef(onRun);
   onRunRef.current = onRun;
+
+  useImperativeHandle(ref, () => ({
+    setHighlights(ranges: HighlightRange[]) {
+      viewRef.current?.dispatch({
+        effects: setHighlightsEffect.of(ranges),
+      });
+    },
+  }));
 
   const getCode = useCallback(() => {
     return viewRef.current?.state.doc.toString() ?? '';
@@ -103,6 +148,7 @@ export default function Editor({ initialCode, onChange, onRun }: EditorProps) {
         javascript(),
         editorTheme,
         highlightStyle,
+        highlightsField,
         runKeymap,
         updateListener,
       ],
@@ -136,6 +182,8 @@ export default function Editor({ initialCode, onChange, onRun }: EditorProps) {
   }, [initialCode]);
 
   return <div ref={containerRef} className="editor-container" />;
-}
+});
+
+export default Editor;
 
 export { type EditorProps };
