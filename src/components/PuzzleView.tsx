@@ -263,7 +263,7 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
             onRun={handleRun}
           />
 
-          <Visualizer active={showViz && (playing || playingTarget)} />
+          <Visualizer active={showViz && playing && !playingTarget} />
 
           <div className="editor-controls">
             <button
