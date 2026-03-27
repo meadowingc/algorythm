@@ -47,6 +47,7 @@ const SAMPLES: Sample[] = [
   {
     name: 'mondo synth',
     code: `// mondo synth — evolving bass + drums
+// adapted from https://strudel.cc/learn/mondo-notation/
 $: note("c2")
   .euclid("<3 6 3>", "<8 16>")
   .fast(2).s("sine")
@@ -67,65 +68,42 @@ $: s("ho*4").press()
   {
     name: 'dub tune',
     code: `// dub tune — plucks, pads & bass
+// adapted from https://strudel.cc/workshop/first-effects/
 $: note("[~ [<[d3,a3,f4]!2 [d3,bb3,g4]!2> ~]]*2")
-  .sound("pluck").delay(.5)
-$: sound("bd rm").delay(.5)
+.sound("gm_electric_guitar_muted").delay(.5)
+
+$: sound("bd rim").bank("RolandTR707").delay(.5)
+
 $: n("<4 [3@3 4] [<2 0> ~@16] ~>")
-  .scale("D4:minor").sound("triangle")
-  .room(2).gain(.4)
+.scale("D4:minor").sound("gm_accordion:2")
+.room(2).gain(.4)
+
 $: n("[0 [~ 0] 4 [3 2] [0 ~] [0 ~] <0 2> ~]/2")
-  .scale("D2:minor")
-  .sound("sawtooth,triangle").lpf(800)`,
+.scale("D2:minor")
+.sound("sawtooth,triangle").lpf(800)`,
   },
   {
     name: 'xylophone stack',
     code: `// stacked patterns — bells, bass & drums
+// adapted from https://strudel.cc/workshop/pattern-effects/
 $: n("0 [2 4] <3 5> [~ <4 1>]".add("<0 [0,2,4]>"))
-  .scale("C5:minor")
-  .sound("triangle")
-  .room(.4).delay(.125)
+.scale("C5:minor")
+.sound("gm_xylophone")
+.room(.4).delay(.125)
 $: note("c2 [eb3,g3]".add("<0 <1 -1>>"))
-  .adsr("[.1 0]:.2:[1 0]")
-  .sound("sawtooth").lpf(400)
-  .room(.5)
+.adsr("[.1 0]:.2:[1 0]")
+.sound("gm_acoustic_bass")
+.room(.5)
 $: n("0 1 [2 3] 2").sound("jazz").jux(rev)`,
-  },
-  {
-    name: 'acid techno',
-    code: `// acid techno — filtered bass with drums
-$: note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")
-  .sound("sawtooth")
-  .lpf(sine.range(100, 2000).slow(4))
-  .room(.3)
-$: sound("hh*8").gain("[.25 1]*4")
-$: sound("bd*4,[~ sd:1]*2")`,
   },
   {
     name: 'tetris',
     code: `// tetris — classic melody
+// adapted from https://strudel.cc/learn/mini-notation/
 note("<[e5 [b4 c5] d5 [c5 b4]] [a4 [a4 c5] e5 [d5 c5]] [b4 [~ c5] d5 e5] [c5 a4 a4 ~] [[~ d5] [~ f5] a5 [g5 f5]] [e5 [~ c5] e5 [d5 c5]] [b4 [b4 c5] d5 e5] [c5 a4 a4 ~]>")
   .sound("square")
   .lpf(1200)
   .delay(.2)`,
-  },
-  {
-    name: 'echoed canon',
-    code: `// echoed melodies — off creates canon layers
-n("0 [4 <3 2>] <2 3> [~ 1]"
-  .off(1/16, x=>x.add(4))
-  .off(1/8, x=>x.add(7))
-).scale("<C5:minor Db5:mixolydian>/2")
-  .s("triangle").room(.5).dec(.1)`,
-  },
-  {
-    name: 'ambient wash',
-    code: `// ambient wash — signals & filters
-note("<[c3,g3,e4] [bb2,f3,d4] [a2,f3,c4] [bb2,g3,eb4]>")
-  .sound("sawtooth")
-  .lpf(sine.range(200, 3000).slow(8))
-  .vowel("<a e i o>")
-  .room(2).delay(.5)
-  .gain(.6)`,
   },
 ];
 
