@@ -103,8 +103,7 @@ export default function LevelSelect({
         </p>
         <p>
           powered by{' '}
-          <a href="https://strudel.cc" target="_blank" rel="noopener noreferrer">Strudel</a>{' '}
-          by Alex McLean & contributors. built with curiosity.{' '}
+          <a href="https://strudel.cc" target="_blank" rel="noopener noreferrer">Strudel</a>.{' '}
           <a href="https://github.com/meadowingc/algorythm" target="_blank" rel="noopener noreferrer">source on github</a>.
         </p>
       </footer>
