@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import type { LevelDef } from '../levels';
-import { playCode, stopPlayback, ensureInit, preloadSounds, tryLiveReload, getActiveLocations } from '../engine/strudel';
+import { playCode, stopPlayback, ensureInit, preloadSounds, tryLiveReload, getActiveLocations, getActivePattern, getTime, processWidgetCalls, remapCleanToOriginal, type OffsetMapEntry } from '../engine/strudel';
 import { evaluatePuzzle, type EvalResult } from '../engine/evaluate';
 import { getUserCode, saveUserCode } from '../store/progress';
 import Editor, { type EditorHandle } from './Editor';
@@ -51,6 +51,7 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
   const [showViz, setShowViz] = useState(false);
   const codeRef = useRef(savedCode);
   const editorRef = useRef<EditorHandle>(null);
+  const offsetMapRef = useRef<OffsetMapEntry[]>([]);
 
   // Preload samples for this level on mount
   useEffect(() => {
@@ -66,7 +67,20 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
       return;
     }
     const tick = () => {
-      editorRef.current?.setHighlights(getActiveLocations());
+      // Only highlight the editor when playing user code (not the target)
+      if (playing) {
+        const locs = getActiveLocations().map(([from, to]): [number, number] => [
+          remapCleanToOriginal(from, offsetMapRef.current),
+          remapCleanToOriginal(to, offsetMapRef.current),
+        ]);
+        editorRef.current?.setHighlights(locs);
+        const pat = getActivePattern();
+        if (pat) {
+          editorRef.current?.drawInlineWidgets(pat, Math.max(getTime(), 0));
+        }
+      } else {
+        editorRef.current?.setHighlights([]);
+      }
       highlightRafRef.current = requestAnimationFrame(tick);
     };
     highlightRafRef.current = requestAnimationFrame(tick);
@@ -85,7 +99,10 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
     if (!playing) return;
     clearTimeout(liveTimerRef.current);
     liveTimerRef.current = setTimeout(async () => {
-      const ok = await tryLiveReload(codeRef.current);
+      const { cleanCode, widgets, offsetMap } = processWidgetCalls(codeRef.current);
+      editorRef.current?.setInlineWidgets(widgets);
+      offsetMapRef.current = offsetMap;
+      const ok = await tryLiveReload(cleanCode);
       if (ok) setResult(null);
     }, 300);
     return () => clearTimeout(liveTimerRef.current);
@@ -102,7 +119,10 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
     try {
       stopPlayback();
       setPlayingTarget(false);
-      await playCode(codeRef.current);
+      const { cleanCode, widgets, offsetMap } = processWidgetCalls(codeRef.current);
+      editorRef.current?.setInlineWidgets(widgets);
+      offsetMapRef.current = offsetMap;
+      await playCode(cleanCode);
       setPlaying(true);
     } catch (e: unknown) {
       setPlaying(false);
@@ -129,13 +149,16 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
     stopPlayback();
     setPlaying(false);
     setPlayingTarget(false);
+    editorRef.current?.clearInlineWidgets();
   }, []);
 
   const handleCheck = useCallback(async () => {
     await handleInit();
     handleStop();
     try {
-      const evalResult = await evaluatePuzzle(codeRef.current, level);
+      const { cleanCode, offsetMap } = processWidgetCalls(codeRef.current);
+      offsetMapRef.current = offsetMap;
+      const evalResult = await evaluatePuzzle(cleanCode, level);
       setResult(evalResult);
       if (evalResult.pass) {
         onComplete(evalResult.score);
@@ -145,6 +168,16 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
       setResult({ pass: false, score: 0, feedback: `Error: ${msg}` });
     }
   }, [level, onComplete, handleStop, handleInit]);
+
+  const handleReset = useCallback(() => {
+    handleStop();
+    codeRef.current = level.starterCode;
+    setCode(level.starterCode);
+    saveUserCode(level.id, level.starterCode);
+    editorRef.current?.setCode(level.starterCode);
+    setResult(null);
+    setHintIndex(-1);
+  }, [level.starterCode, level.id, handleStop]);
 
   const handleRun = useCallback(
     (runCode: string) => {
@@ -280,6 +313,9 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
               onClick={() => setShowViz((v) => !v)}
             >
               {showViz ? '~ viz' : '> viz'}
+            </button>
+            <button className="btn btn-ghost" onClick={handleReset}>
+              reset
             </button>
             <span className="editor-hint">
               <kbd>Ctrl+Enter</kbd> play · <kbd>Ctrl+.</kbd> stop · <kbd>Ctrl+Shift+Enter</kbd> target

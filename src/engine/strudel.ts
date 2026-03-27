@@ -10,6 +10,99 @@ export function getActivePattern(): unknown {
   return activePattern;
 }
 
+/** Types of inline visualizations supported in the editor. */
+export type VizWidgetKind = 'pianoroll' | 'punchcard';
+
+/** Info about an inline visualization widget found in the code. */
+export interface VizWidgetInfo {
+  kind: VizWidgetKind;
+  /** Character offset of end-of-line where the widget should appear (in original code). */
+  pos: number;
+  /** Character range [from, to) of the $: track in the *cleaned* code (for per-track viz filtering). */
+  trackRange?: [number, number];
+}
+
+/** Entry recording a stripped region: position in cleaned code and how many chars were removed. */
+export interface OffsetMapEntry {
+  /** Position in the cleaned code where the removal happened. */
+  cleanPos: number;
+  /** Number of characters that were removed from the original code at this point. */
+  removed: number;
+}
+
+/** Remap a character offset from cleaned-code space back to original-code space. */
+export function remapCleanToOriginal(pos: number, offsetMap: OffsetMapEntry[]): number {
+  let shift = 0;
+  for (const entry of offsetMap) {
+    if (entry.cleanPos > pos) break;
+    shift += entry.removed;
+  }
+  return pos + shift;
+}
+
+/**
+ * Detect `._pianoroll()` / `._punchcard()` calls in code.
+ * Returns cleaned code (with those calls removed), widget positions in the original code,
+ * and an offsetMap for remapping cleaned-code offsets back to original-code offsets.
+ */
+export function processWidgetCalls(code: string): { cleanCode: string; widgets: VizWidgetInfo[]; offsetMap: OffsetMapEntry[] } {
+  const widgets: VizWidgetInfo[] = [];
+  const widgetRe = /\._(?:(pianoroll|punchcard))\([^)]*\)/g;
+  let match;
+  while ((match = widgetRe.exec(code)) !== null) {
+    const kind = match[1] as VizWidgetKind;
+    // Widget decoration goes at end of the line containing the call
+    const lineEnd = code.indexOf('\n', match.index);
+    widgets.push({ kind, pos: lineEnd === -1 ? code.length : lineEnd });
+  }
+  // Build offset map: find each stripped region and record its cleaned position and size
+  const offsetMap: OffsetMapEntry[] = [];
+  const stripRe = /\n?[ \t]*\._(?:pianoroll|punchcard)\([^)]*\)/g;
+  let stripMatch;
+  let totalRemoved = 0;
+  while ((stripMatch = stripRe.exec(code)) !== null) {
+    const cleanPos = stripMatch.index - totalRemoved;
+    const removed = stripMatch[0].length;
+    offsetMap.push({ cleanPos, removed });
+    totalRemoved += removed;
+  }
+  // Strip the widget calls (including optional leading whitespace/newline for own-line calls)
+  const cleanCode = code.replace(/\n?[ \t]*\._(?:pianoroll|punchcard)\([^)]*\)/g, '');
+
+  // Compute per-track $: block ranges so each widget only shows its own track
+  const origDollarRe = /^\$:/gm;
+  const origDollarPositions: number[] = [];
+  let odm;
+  while ((odm = origDollarRe.exec(code)) !== null) origDollarPositions.push(odm.index);
+
+  if (origDollarPositions.length > 1) {
+    // Find $: positions in cleaned code
+    const cleanDollarRe = /^\$:/gm;
+    const cleanDollarPositions: number[] = [];
+    let cdm;
+    while ((cdm = cleanDollarRe.exec(cleanCode)) !== null) cleanDollarPositions.push(cdm.index);
+
+    // Compute character ranges for each $: block in cleaned code
+    const cleanRanges: [number, number][] = cleanDollarPositions.map((pos, i) => [
+      pos,
+      i + 1 < cleanDollarPositions.length ? cleanDollarPositions[i + 1] : cleanCode.length,
+    ]);
+
+    // Assign each widget to the $: block it sits inside (in original code)
+    for (const w of widgets) {
+      let blockIdx = -1;
+      for (let i = origDollarPositions.length - 1; i >= 0; i--) {
+        if (origDollarPositions[i] <= w.pos) { blockIdx = i; break; }
+      }
+      if (blockIdx >= 0 && blockIdx < cleanRanges.length) {
+        w.trackRange = cleanRanges[blockIdx];
+      }
+    }
+  }
+
+  return { cleanCode, widgets, offsetMap };
+}
+
 /**
  * Get source code highlight ranges for currently active events.
  * Returns an array of [from, to] character offsets into the code string.
@@ -21,7 +114,7 @@ export function getActiveLocations(): [number, number][] {
       queryArc: (begin: number, end: number) => Array<{
         whole?: { begin: { valueOf(): number }; end: { valueOf(): number } };
         part: { begin: { valueOf(): number }; end: { valueOf(): number } };
-        context: { locations?: [number, number][] };
+        context: { locations?: Array<{ start: number; end: number }> };
       }>;
     };
     const time = getTime();
@@ -37,10 +130,12 @@ export function getActiveLocations(): [number, number][] {
       const hapLocs = hap.context?.locations;
       if (!hapLocs) continue;
       for (const loc of hapLocs) {
-        const key = `${loc[0]}:${loc[1]}`;
+        const from = loc.start;
+        const to = loc.end;
+        const key = `${from}:${to}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        locs.push(loc);
+        locs.push([from, to]);
       }
     }
     return locs;
@@ -125,7 +220,9 @@ export async function tryLiveReload(code: string): Promise<boolean> {
 
 /** Stop all playback. */
 export function stopPlayback(): void {
-  hush();
+  if (initPromise) {
+    try { hush(); } catch { /* repl not ready yet */ }
+  }
   activePattern = null;
 }
 

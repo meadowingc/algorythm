@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { playCode, stopPlayback, ensureInit, tryLiveReload, getActiveLocations } from '../engine/strudel';
+import { playCode, stopPlayback, ensureInit, tryLiveReload, getActiveLocations, getActivePattern, getTime, processWidgetCalls, remapCleanToOriginal, type OffsetMapEntry } from '../engine/strudel';
 import Editor, { type EditorHandle } from './Editor';
 import Visualizer from './Visualizer';
 
@@ -36,6 +36,7 @@ const DEFAULT_CODE = `// jam mode — experiment freely!
 // synths: sawtooth square triangle sine
 // try: sound("bd hh*4 sd hh*4")
 // or: note("c4 e4 g4 e4").sound("piano")
+// add ._pianoroll() to see notes inline!
 sound("")`;
 
 interface Sample {
@@ -87,13 +88,13 @@ $: n("[0 [~ 0] 4 [3 2] [0 ~] [0 ~] <0 2> ~]/2")
     code: `// stacked patterns — bells, bass & drums
 // adapted from https://strudel.cc/workshop/pattern-effects/
 $: n("0 [2 4] <3 5> [~ <4 1>]".add("<0 [0,2,4]>"))
-.scale("C5:minor")
-.sound("gm_xylophone")
-.room(.4).delay(.125)
+  .scale("C5:minor")
+  .sound("triangle")
+  .room(.4).delay(.125)
 $: note("c2 [eb3,g3]".add("<0 <1 -1>>"))
-.adsr("[.1 0]:.2:[1 0]")
-.sound("gm_acoustic_bass")
-.room(.5)
+  .adsr("[.1 0]:.2:[1 0]")
+  .sound("sawtooth").lpf(400)
+  .room(.5)
 $: n("0 1 [2 3] 2").sound("jazz").jux(rev)`,
   },
   {
@@ -104,6 +105,17 @@ note("<[e5 [b4 c5] d5 [c5 b4]] [a4 [a4 c5] e5 [d5 c5]] [b4 [~ c5] d5 e5] [c5 a4 
   .sound("square")
   .lpf(1200)
   .delay(.2)`,
+  },
+  {
+    name: 'echoed canon',
+    code: `// echoed melodies with inline pianoroll
+// add ._pianoroll() or ._punchcard() to see notes inline!
+n("0 [4 <3 2>] <2 3> [~ 1]"
+  .off(1/16, x=>x.add(4))
+  .off(1/8, x=>x.add(7))
+).scale("<C5:minor Db5:mixolydian>/2")
+  .s("triangle").room(.5).dec(.1)
+  ._pianoroll()`,
   },
 ];
 
@@ -147,12 +159,13 @@ export default function Sandbox({ onBack }: SandboxProps) {
   const [toast, setToast] = useState<string | null>(null);
   const codeRef = useRef(jam.slots[jam.active] ?? DEFAULT_CODE);
   const editorRef = useRef<EditorHandle>(null);
+  const offsetMapRef = useRef<OffsetMapEntry[]>([]);
 
   useEffect(() => {
     return () => stopPlayback();
   }, []);
 
-  // Active code highlighting RAF loop
+  // Active code highlighting + inline widget drawing RAF loop
   const highlightRafRef = useRef(0);
   useEffect(() => {
     if (!playing) {
@@ -160,7 +173,15 @@ export default function Sandbox({ onBack }: SandboxProps) {
       return;
     }
     const tick = () => {
-      editorRef.current?.setHighlights(getActiveLocations());
+      const locs = getActiveLocations().map(([from, to]): [number, number] => [
+        remapCleanToOriginal(from, offsetMapRef.current),
+        remapCleanToOriginal(to, offsetMapRef.current),
+      ]);
+      editorRef.current?.setHighlights(locs);
+      const pat = getActivePattern();
+      if (pat) {
+        editorRef.current?.drawInlineWidgets(pat, Math.max(getTime(), 0));
+      }
       highlightRafRef.current = requestAnimationFrame(tick);
     };
     highlightRafRef.current = requestAnimationFrame(tick);
@@ -195,7 +216,10 @@ export default function Sandbox({ onBack }: SandboxProps) {
     clearTimeout(liveTimerRef.current);
     liveTimerRef.current = setTimeout(async () => {
       if (playingRef.current) {
-        const ok = await tryLiveReload(codeRef.current);
+        const { cleanCode, widgets, offsetMap } = processWidgetCalls(codeRef.current);
+        editorRef.current?.setInlineWidgets(widgets);
+        offsetMapRef.current = offsetMap;
+        const ok = await tryLiveReload(cleanCode);
         if (ok) setError(null);
       }
     }, 300);
@@ -207,7 +231,10 @@ export default function Sandbox({ onBack }: SandboxProps) {
     try {
       stopPlayback();
       setError(null);
-      await playCode(codeRef.current);
+      const { cleanCode, widgets, offsetMap } = processWidgetCalls(codeRef.current);
+      editorRef.current?.setInlineWidgets(widgets);
+      offsetMapRef.current = offsetMap;
+      await playCode(cleanCode);
       setPlaying(true);
     } catch (e: unknown) {
       setPlaying(false);
@@ -218,6 +245,7 @@ export default function Sandbox({ onBack }: SandboxProps) {
   const handleStop = useCallback(() => {
     stopPlayback();
     setPlaying(false);
+    editorRef.current?.clearInlineWidgets();
   }, []);
 
   const handleRun = useCallback(
