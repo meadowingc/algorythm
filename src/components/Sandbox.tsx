@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { playCode, stopPlayback, ensureInit, tryLiveReload, getActiveLocations, getActivePattern, getTime, processWidgetCalls, remapCleanToOriginal, type OffsetMapEntry } from '../engine/strudel';
 import Editor, { type EditorHandle } from './Editor';
 import Visualizer from './Visualizer';
+import Piano from './Piano';
 
 const STORAGE_KEY = 'algorythm_jam';
 
@@ -155,6 +156,7 @@ export default function Sandbox({ onBack }: SandboxProps) {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showViz, setShowViz] = useState(false);
+  const [showPiano, setShowPiano] = useState(false);
   const [initDone, setInitDone] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const codeRef = useRef(jam.slots[jam.active] ?? DEFAULT_CODE);
@@ -359,6 +361,15 @@ export default function Sandbox({ onBack }: SandboxProps) {
           onRun={handleRun}
         />
 
+        <Piano
+          active={showPiano}
+          onNotePlay={() => {
+            stopPlayback();
+            setPlaying(false);
+            editorRef.current?.clearInlineWidgets();
+          }}
+        />
+
         <Visualizer active={showViz && playing} />
 
         {error && (
@@ -377,6 +388,12 @@ export default function Sandbox({ onBack }: SandboxProps) {
             onClick={() => setShowViz((v) => !v)}
           >
             {showViz ? '~ viz' : '> viz'}
+          </button>
+          <button
+            className={`btn btn-ghost viz-toggle ${showPiano ? 'viz-active' : ''}`}
+            onClick={() => setShowPiano((v) => !v)}
+          >
+            {showPiano ? '~ piano' : '> piano'}
           </button>
           <div className="share-controls">
             <button className="btn btn-ghost" onClick={handleShare}>
