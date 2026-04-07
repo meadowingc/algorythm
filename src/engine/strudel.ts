@@ -150,6 +150,7 @@ export function ensureInit(): Promise<unknown> {
       prebake: () =>
         Promise.all([
           samples('github:tidalcycles/dirt-samples'),
+          samples('https://raw.githubusercontent.com/felixroos/dough-samples/main/tidal-drum-machines.json'),
           samples('https://raw.githubusercontent.com/felixroos/dough-samples/main/piano.json'),
         ]),
     });

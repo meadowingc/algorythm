@@ -6,6 +6,7 @@ import { getUserCode, saveUserCode } from '../store/progress';
 import Editor, { type EditorHandle } from './Editor';
 import Visualizer from './Visualizer';
 import Piano from './Piano';
+import DrumPads from './DrumPads';
 
 /** Render inline markdown: `code` and [text](url) */
 function renderInline(text: string): ReactNode[] {
@@ -51,6 +52,7 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
   const [initDone, setInitDone] = useState(false);
   const [showViz, setShowViz] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
+  const [showDrums, setShowDrums] = useState(false);
   const codeRef = useRef(savedCode);
   const editorRef = useRef<EditorHandle>(null);
   const offsetMapRef = useRef<OffsetMapEntry[]>([]);
@@ -308,6 +310,16 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
             }}
           />
 
+          <DrumPads
+            active={showDrums}
+            onNotePlay={() => {
+              stopPlayback();
+              setPlaying(false);
+              setPlayingTarget(false);
+              editorRef.current?.clearInlineWidgets();
+            }}
+          />
+
           <Visualizer active={showViz && playing && !playingTarget} />
 
           <div className="editor-controls">
@@ -331,6 +343,12 @@ export default function PuzzleView({ level, onComplete, onBack, onNext, nextLeve
               onClick={() => setShowPiano((v) => !v)}
             >
               {showPiano ? '~ piano' : '> piano'}
+            </button>
+            <button
+              className={`btn btn-ghost viz-toggle ${showDrums ? 'viz-active' : ''}`}
+              onClick={() => setShowDrums((v) => !v)}
+            >
+              {showDrums ? '~ drums' : '> drums'}
             </button>
             <button className="btn btn-ghost" onClick={handleReset}>
               reset

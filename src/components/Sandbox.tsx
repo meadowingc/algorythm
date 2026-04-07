@@ -3,6 +3,7 @@ import { playCode, stopPlayback, ensureInit, tryLiveReload, getActiveLocations, 
 import Editor, { type EditorHandle } from './Editor';
 import Visualizer from './Visualizer';
 import Piano from './Piano';
+import DrumPads from './DrumPads';
 
 const STORAGE_KEY = 'algorythm_jam';
 
@@ -157,6 +158,7 @@ export default function Sandbox({ onBack }: SandboxProps) {
   const [error, setError] = useState<string | null>(null);
   const [showViz, setShowViz] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
+  const [showDrums, setShowDrums] = useState(false);
   const [initDone, setInitDone] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const codeRef = useRef(jam.slots[jam.active] ?? DEFAULT_CODE);
@@ -370,6 +372,15 @@ export default function Sandbox({ onBack }: SandboxProps) {
           }}
         />
 
+        <DrumPads
+          active={showDrums}
+          onNotePlay={() => {
+            stopPlayback();
+            setPlaying(false);
+            editorRef.current?.clearInlineWidgets();
+          }}
+        />
+
         <Visualizer active={showViz && playing} />
 
         {error && (
@@ -394,6 +405,12 @@ export default function Sandbox({ onBack }: SandboxProps) {
             onClick={() => setShowPiano((v) => !v)}
           >
             {showPiano ? '~ piano' : '> piano'}
+          </button>
+          <button
+            className={`btn btn-ghost viz-toggle ${showDrums ? 'viz-active' : ''}`}
+            onClick={() => setShowDrums((v) => !v)}
+          >
+            {showDrums ? '~ drums' : '> drums'}
           </button>
           <div className="share-controls">
             <button className="btn btn-ghost" onClick={handleShare}>

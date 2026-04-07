@@ -423,6 +423,7 @@
 .editor-controls {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 8px 16px;
   background: var(--bg);
@@ -690,6 +691,111 @@
   font-size: 8px;
   padding-bottom: 3px;
   color: #555;
+}
+
+/* ── Drum Pads ─────────────────────────────────────── */
+.drum-panel {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: #000;
+  padding: 8px 12px;
+}
+
+.drum-expression-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.drum-expression {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  outline: none;
+}
+
+.drum-expression:focus {
+  border-color: var(--accent);
+}
+
+.drum-reset-btn {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.drum-error {
+  font-size: 11px;
+  color: var(--error);
+  padding-bottom: 4px;
+}
+
+.drum-pads-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  touch-action: none;
+  user-select: none;
+}
+
+.drum-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 4px;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.05s ease, box-shadow 0.05s ease;
+}
+
+.drum-pad:hover {
+  background: #1a1a1a;
+  border-color: #333;
+}
+
+.drum-pad-active {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 12px rgba(0, 255, 213, 0.5);
+}
+
+.drum-pad-active .drum-pad-label,
+.drum-pad-active .drum-pad-desc {
+  color: #000;
+}
+
+.drum-pad-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.drum-pad-desc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.drum-pad-unavailable {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.drum-pad-unavailable:hover {
+  background: #111;
+  border-color: #222;
 }
 
 .share-controls {
