@@ -93,11 +93,38 @@ $: n("0 [2 4] <3 5> [~ <4 1>]".add("<0 [0,2,4]>"))
   .scale("C5:minor")
   .sound("triangle")
   .room(.4).delay(.125)
-$: note("c2 [eb3,g3]".add("<0 <1 -1>>"))
+$: n("0 [9,11]".add("<0 <1 -1>>"))
+  .scale("C2:minor")
   .adsr("[.1 0]:.2:[1 0]")
   .sound("sawtooth").lpf(400)
   .room(.5)
 $: n("0 1 [2 3] 2").sound("jazz").jux(rev)`,
+  },
+  {
+    name: 'anthem house',
+    code: `// anthem house — a hand-built 8-bar club chorus
+setcpm(124/4)
+
+$: n("<[~ 7 ~ 6] [4 ~ 3 ~] [~ 7 ~ 8] [7 ~ 4 ~] [~ 7 ~ ~] [8 ~ ~ ~] [~ 10 ~ 8] [7 ~ 6 ~]>")
+  .scale("C5:minor").sound("square").delay(.125).gain(.3)
+
+$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [4,6,8]] [~ [0,2,4] ~ ~] [~ [3,5,7] ~ ~] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [4,6,8]]>")
+  .scale("C4:minor").sound("triangle").room(.2).gain(.35)
+
+$: n("<[0 ~ 0 3] [0 ~ 5 3] [0 ~ 0 3] [0 ~ 6 5] ~ ~ [0 ~ 5 3] [0 7 6 3]>")
+  .scale("C2:minor").sound("sawtooth").lpf(700)
+
+$: sound("<~ ~ ~ ~ ~ [lt mt ht ht] ~ ~>")
+  .bank("RolandTR909")
+
+$: sound("<bd*4 bd*4 bd*4 bd*4 ~ ~ bd*4 bd*4>")
+  .bank("RolandTR909")
+
+$: sound("<[~ cp]*2 [~ cp]*2 [~ cp]*2 [~ cp]*2 ~ ~ [~ cp]*2 [~ cp]*2>")
+  .bank("RolandTR909")
+
+$: sound("<[~ hh]*4 [~ hh]*4 [~ hh]*4 [~ oh ~ hh] [~ hh]*4 [~ hh]*4 [~ hh]*4 [cr ~ oh hh]>")
+  .bank("RolandTR909")`,
   },
   {
     name: 'tetris',

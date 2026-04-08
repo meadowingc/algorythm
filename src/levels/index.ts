@@ -29,6 +29,7 @@ export const chapters = [
   { id: 1, title: 'First Beats', description: 'Learn to make rhythms with code' },
   { id: 2, title: 'Acid Techno', description: 'Build an acid techno track, one layer at a time' },
   { id: 3, title: 'Stacking Patterns', description: 'Melody, bass, and drums — the full stack' },
+  { id: 4, title: 'Anthem House', description: 'Build an original house anthem with drums, stabs, bass, and a hook' },
 ];
 
 export const levels: LevelDef[] = [
@@ -199,15 +200,15 @@ export const levels: LevelDef[] = [
     levelInChapter: 6,
     title: 'Enter the Bass',
     description:
-      'Time for melody! `note()` plays pitched sounds. `c2` is a low C, `c3` is one octave higher. `[c2 c3]*4` rapidly alternates between them — the classic "octave bass" riff. `.sound("sawtooth")` gives us the raw synth tone. `.lpf(800)` is a low-pass filter that cuts harsh high frequencies.',
+      'Time for pitch! `n()` picks notes from a scale using numbers, which is easier than memorizing note names. `.scale("C2:minor")` sets the key, `0` is the root, and `7` is that same root one octave higher. `[0 7]*4` makes the classic "octave bass" riff. `.sound("sawtooth")` gives us the raw synth tone, and `.lpf(800)` cuts harsh high frequencies.',
     type: 'completion',
-    targetCode: '$: note("[c2 c3]*4").sound("sawtooth").lpf(800)\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
-    starterCode: '// note() plays pitched sounds — c2 = low C, c3 = octave up\n// .sound("sawtooth") = raw synth waveform\n// .lpf(800) = low-pass filter, cuts harsh highs\n$: note("[~ ~]*4").sound("sawtooth").lpf(800)\n  ._pianoroll()\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
+    targetCode: '$: n("[0 7]*4").scale("C2:minor").sound("sawtooth").lpf(800)\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
+    starterCode: '// n() picks scale degrees instead of note names\n// .scale("C2:minor") sets the key: 0 = root, 7 = same note one octave higher\n// .sound("sawtooth") = raw synth waveform\n$: n("[~ ~]*4").scale("C2:minor").sound("sawtooth").lpf(800)\n  ._pianoroll()\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
     hints: [
-      'c2 is a low C note, c3 is one octave higher',
-      'Replace the ~ rests with c2 and c3',
+      'In C minor, 0 is the root and 7 is that same root one octave up',
+      'Replace the ~ rests with 0 and 7',
     ],
-    constraints: { requiredStrings: ['note(', '.lpf('] },
+    constraints: { requiredStrings: ['n(', '.scale("C2:minor")', '.lpf('] },
   },
   {
     id: 'acid-7',
@@ -215,15 +216,15 @@ export const levels: LevelDef[] = [
     levelInChapter: 7,
     title: 'The Progression',
     description:
-      'Angle brackets `<>` cycle through values — one per cycle. This creates a chord progression where the bass changes every bar! `.room(.3)` adds reverb for space. Fill in the missing bass notes to complete the 4-bar progression.',
+      'Angle brackets `<>` cycle through values — one per cycle. Instead of memorizing note names, we can shift the whole bass riff by scale degrees with `.add()`. In `C minor`, adding `6` moves the riff to B-flat, `3` moves it to F, and `2` moves it to E-flat. Fill in the missing scale steps to complete the 4-bar progression.',
     type: 'completion',
-    targetCode: '$: note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")\n  .sound("sawtooth").lpf(800).room(.3)\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
-    starterCode: '// <a b c d> plays a different value each cycle\n// this creates a 4-bar bass progression\n// .room() adds reverb (0 to 1)\n$: note("<[c2 c3]*4 [~ ~]*4 [f2 f3]*4 [~ ~]*4>")\n  .sound("sawtooth").lpf(800).room(.3)\n  ._pianoroll()\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
+    targetCode: '$: n("[0 7]*4".add("<0 6 3 2>"))\n  .scale("C2:minor").sound("sawtooth").lpf(800).room(.3)\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
+    starterCode: '// .add() shifts the whole riff by scale degrees\n// <0 6 3 2> means: stay on C, move to Bb, move to F, move to Eb\n// .room() adds reverb (0 to 1)\n$: n("[0 7]*4".add("<0 _ 3 _>"))\n  .scale("C2:minor").sound("sawtooth").lpf(800).room(.3)\n  ._pianoroll()\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
     hints: [
-      'bb1 is B-flat in octave 1, bb2 is one octave higher',
-      'eb2 is E-flat in octave 2 — classic minor key bass notes',
+      'The second bar shifts the riff by 6 scale steps, which lands on B-flat',
+      'The last bar shifts by 2 scale steps, which lands on E-flat',
     ],
-    constraints: { requiredStrings: ['<', '>'] },
+    constraints: { requiredStrings: ['.add(', '.scale("C2:minor")'] },
     cycles: 4,
   },
   {
@@ -234,8 +235,8 @@ export const levels: LevelDef[] = [
     description:
       'The final secret: a *moving* filter! Instead of a fixed `.lpf()` value, use `sine.range(100, 2000)` — a wave that smoothly sweeps between 100 and 2000 Hz. `.slow(4)` makes the sweep take 4 cycles. This is the iconic acid sound! You\'re building the "acid techno" jam sample — find it in jam mode after this!',
     type: 'completion',
-    targetCode: '$: note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")\n  .sound("sawtooth")\n  .lpf(sine.range(100, 2000).slow(4))\n  .room(.3)\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
-    starterCode: '// sine.range(lo, hi) = smooth wave between lo and hi\n// .slow(n) = take n cycles to complete one sweep\n// this replaces the fixed .lpf(800) with a moving filter!\n$: note("<[c2 c3]*4 [bb1 bb2]*4 [f2 f3]*4 [eb2 eb3]*4>")\n  .sound("sawtooth")\n  .lpf(sine.range(_, _).slow(_))\n  .room(.3)\n  ._pianoroll()\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
+    targetCode: '$: n("[0 7]*4".add("<0 6 3 2>"))\n  .scale("C2:minor").sound("sawtooth")\n  .lpf(sine.range(100, 2000).slow(4))\n  .room(.3)\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
+    starterCode: '// sine.range(lo, hi) = smooth wave between lo and hi\n// .slow(n) = take n cycles to complete one sweep\n// the riff still uses scale degrees, not note names\n$: n("[0 7]*4".add("<0 6 3 2>"))\n  .scale("C2:minor").sound("sawtooth")\n  .lpf(sine.range(_, _).slow(_))\n  .room(.3)\n  ._pianoroll()\n$: sound("hh*8").gain("[.25 1]*4")\n$: sound("bd*4, [~ sd]*2")',
     hints: [
       'The filter sweeps from 100 Hz (muffled) to 2000 Hz (bright)',
       'slow(4) means one full sweep every 4 cycles',
@@ -302,12 +303,12 @@ export const levels: LevelDef[] = [
     levelInChapter: 4,
     title: 'Walk the Bass',
     description:
-      '`.add()` shifts all notes in a pattern — `1` shifts up a semitone, `-1` shifts down. `<0 <1 -1>>` cycles: unchanged, up one, unchanged, down one. This makes the bass "walk" each bar. `[eb3,g3]` plays two notes at once — a chord. `.adsr()` shapes the envelope.',
+      '`.add()` shifts all notes in a pattern — here it moves by scale step, not by note name. `1` goes up one note in the scale, `-1` goes down one. `<0 <1 -1>>` cycles: unchanged, up one step, unchanged, down one step. `[9,11]` plays two higher scale tones at once — a chord. `.adsr()` shapes the envelope.',
     type: 'completion',
-    targetCode: 'note("c2 [eb3,g3]".add("<0 <1 -1>>"))\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)',
-    starterCode: '// .add() shifts all notes: 1=up, -1=down, 0=unchanged\n// <0 <1 -1>> cycles: same, up, same, down\n// [eb3,g3] = chord (two notes at once)\n// .adsr("attack:decay:sustain:release")\nnote("c2 [eb3,g3]".add("<0 <~ ~>>"))\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)',
+    targetCode: 'n("0 [9,11]".add("<0 <1 -1>>"))\n  .scale("C2:minor")\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)',
+    starterCode: '// .add() shifts all scale degrees: 1=up one scale step, -1=down one\n// <0 <1 -1>> cycles: same, up, same, down\n// [9,11] is a higher chord built from the same C minor scale\n// .adsr("attack:decay:sustain:release")\nn("0 [9,11]".add("<0 <~ ~>>"))\n  .scale("C2:minor")\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)',
     hints: [
-      '.add(1) shifts up one semitone, .add(-1) shifts down',
+      '.add(1) moves the whole pattern up one note in the scale; .add(-1) moves it down',
       'The bass walks: unchanged, up 1, unchanged, down 1',
     ],
     constraints: { requiredStrings: ['.add('] },
@@ -321,13 +322,135 @@ export const levels: LevelDef[] = [
     description:
       'The grand finale! `.add("<0 [0,2,4]>")` on the melody means: first cycle single notes, second cycle chords — `[0,2,4]` adds root + 3rd + 5th on top of each note, forming a triad. This is the "xylophone stack" jam sample — find it in jam mode to keep experimenting!',
     type: 'completion',
-    targetCode: '$: n("0 [2 4] <3 5> [~ <4 1>]".add("<0 [0,2,4]>"))\n  .scale("C5:minor").sound("triangle")\n  .room(.4).delay(.125)\n$: note("c2 [eb3,g3]".add("<0 <1 -1>>"))\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)\n$: n("0 1 [2 3] 2").sound("jazz").jux(rev)',
-    starterCode: '// .add("<0 [0,2,4]>") = single notes, then chords!\n// [0,2,4] adds root + 3rd + 5th = instant triad\n$: n("0 [2 4] <3 5> [~ <4 1>]".add("<0 [0,~,~]>"))\n  .scale("C5:minor").sound("triangle")\n  .room(.4).delay(.125)\n$: note("c2 [eb3,g3]".add("<0 <1 -1>>"))\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)\n$: n("0 1 [2 3] 2").sound("jazz").jux(rev)',
+    targetCode: '$: n("0 [2 4] <3 5> [~ <4 1>]".add("<0 [0,2,4]>"))\n  .scale("C5:minor").sound("triangle")\n  .room(.4).delay(.125)\n$: n("0 [9,11]".add("<0 <1 -1>>"))\n  .scale("C2:minor")\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)\n$: n("0 1 [2 3] 2").sound("jazz").jux(rev)',
+    starterCode: '// .add("<0 [0,2,4]>") = single notes, then chords!\n// [0,2,4] adds root + 3rd + 5th = instant triad\n$: n("0 [2 4] <3 5> [~ <4 1>]".add("<0 [0,~,~]>"))\n  .scale("C5:minor").sound("triangle")\n  .room(.4).delay(.125)\n$: n("0 [9,11]".add("<0 <1 -1>>"))\n  .scale("C2:minor")\n  .adsr("[.1 0]:.2:[1 0]")\n  .sound("sawtooth").lpf(400).room(.5)\n$: n("0 1 [2 3] 2").sound("jazz").jux(rev)',
     hints: [
       '[0,2,4] adds the root (0), third (2), and fifth (4)',
       'These three numbers form a triad — the building block of chords',
     ],
     constraints: { requiredStrings: ['$:', '.add('] },
     cycles: 4,
+  },
+
+  // ── Chapter 4: Anthem House ──────────────────────────────
+  // Build an original 8-bar house anthem with drums, stabs, bass, and a hook.
+  {
+    id: 'anthem-1',
+    chapter: 4,
+    levelInChapter: 1,
+    title: 'The Groove',
+    description:
+      'Start with a groove that already feels like a real record. Set the tempo to `124` BPM and build a classic house backbone: kick on every beat, claps on 2 and 4, and offbeat hi-hats in between.',
+    type: 'completion',
+    targetCode: 'setcpm(124/4)\nsound("bd*4, [~ cp]*2, [~ hh]*4").bank("RolandTR909")',
+    starterCode: '// setcpm(bpm/4) is a nice way to think in dance-music tempo\n// use the TR-909 bank for a classic house sound\n// fill in the tempo, clap, and hi-hat pattern\nsetcpm(_/_)\nsound("bd*4, [~ ~]*2, [~ ~]*4").bank("RolandTR909")\n  ._punchcard()',
+    hints: [
+      'House often sits around 124 BPM — in Strudel that is setcpm(124/4)',
+      'cp is the clap, hh is the hi-hat',
+    ],
+    constraints: { requiredStrings: ['setcpm(124/4)', '.bank("RolandTR909")'] },
+  },
+  {
+    id: 'anthem-2',
+    chapter: 4,
+    levelInChapter: 2,
+    title: 'The Bass Motif',
+    description:
+      'A song needs a bass line people can remember. Add a syncopated 2-bar bass motif using scale degrees in `C minor`. Rests matter here — they give the riff its bounce.',
+    type: 'completion',
+    targetCode: 'setcpm(124/4)\n$: n("<[0 ~ 0 3] [0 ~ 5 3]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("bd*4, [~ cp]*2, [~ hh]*4").bank("RolandTR909")',
+    starterCode: '// n() picks notes from the scale by number\n// this riff breathes because some slots are rests (~)\n// keep the first bar on 0 ... 3 and let the second bar answer with 5\nsetcpm(124/4)\n$: n("<[0 ~ 0 ~] [0 ~ ~ 3]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n  ._pianoroll()\n$: sound("bd*4, [~ cp]*2, [~ hh]*4").bank("RolandTR909")\n  ._punchcard()',
+    hints: [
+      'The first bar ends on 3',
+      'The second bar answers with 5 before returning to 3',
+    ],
+    constraints: { requiredStrings: ['n(', '.scale("C2:minor")', '.sound("sawtooth")'] },
+    cycles: 2,
+  },
+  {
+    id: 'anthem-3',
+    chapter: 4,
+    levelInChapter: 3,
+    title: 'Stab Chords',
+    description:
+      'Now make it feel like a song. Add offbeat chord stabs above the bass. These short chord hits are what give a house groove lift and make the rhythm feel physical.',
+    type: 'completion',
+    targetCode: 'setcpm(124/4)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("bd*4, [~ cp]*2, [~ hh]*4").bank("RolandTR909")',
+    starterCode: '// [0,2,4] is a triad: root, third, fifth\n// house stabs usually hit off the beat, not on the kick\n// fill in the second bar with a brighter answer chord\nsetcpm(124/4)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [~,~,~] ~ [~,~,~]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n  ._pianoroll()\n$: n("<[0 ~ 0 3] [0 ~ 5 3]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("bd*4, [~ cp]*2, [~ hh]*4").bank("RolandTR909")',
+    hints: [
+      'The second bar starts with [5,7,9]',
+      'The last chord in bar 2 answers with [3,5,7]',
+    ],
+    constraints: { requiredStrings: ['[0,2,4]', '.room(', '.gain('] },
+    cycles: 2,
+  },
+  {
+    id: 'anthem-4',
+    chapter: 4,
+    levelInChapter: 4,
+    title: 'Hear the Hook',
+    description:
+      'Listen to the target and recreate the hook. It is just two bars long, but it should sound like the part people would sing back after one listen.',
+    type: 'recreate',
+    targetCode: 'setcpm(124/4)\n$: n("<[~ 7 ~ 6] [4 ~ 3 ~]>")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("bd*4, [~ cp]*2, [~ hh]*4").bank("RolandTR909")',
+    starterCode: '// listen to the target, then write the hook on this top line\n// keep the backing tracks as they are — only the melody is missing\nsetcpm(124/4)\n$: n("")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("bd*4, [~ cp]*2, [~ hh]*4").bank("RolandTR909")',
+    hints: [
+      'The hook starts high on 7, then steps down to 6',
+      'The second bar answers with 4, then 3',
+    ],
+    constraints: { requiredStrings: ['n(', '.sound("square")'] },
+    cycles: 2,
+  },
+  {
+    id: 'anthem-5',
+    chapter: 4,
+    levelInChapter: 5,
+    title: 'Answer Phrase',
+    description:
+      'Great hooks do not just repeat; they answer themselves. Extend the track into a 4-bar chorus by giving the melody a second half and letting the chords and bass follow it forward.',
+    type: 'completion',
+    targetCode: 'setcpm(124/4)\n$: n("<[~ 7 ~ 6] [4 ~ 3 ~] [~ 7 ~ 8] [7 ~ 4 ~]>")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [4,6,8]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3] [0 ~ 0 3] [0 ~ 6 5]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("<bd*4 bd*4 bd*4 bd*4>").bank("RolandTR909")\n$: sound("<[~ cp]*2 [~ cp]*2 [~ cp]*2 [~ cp]*2>").bank("RolandTR909")\n$: sound("<[~ hh]*4 [~ hh]*4 [~ hh]*4 [~ oh ~ hh]>").bank("RolandTR909")',
+    starterCode: '// bar 3 answers bar 1, bar 4 answers bar 2\n// let the hook rise a little before landing back on 4\nsetcpm(124/4)\n$: n("<[~ 7 ~ 6] [4 ~ 3 ~] [~ ~ ~ ~] [~ ~ ~ ~]>")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n  ._pianoroll()\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [4,6,8]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3] [0 ~ 0 3] [0 ~ 6 5]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("<bd*4 bd*4 bd*4 bd*4>").bank("RolandTR909")\n$: sound("<[~ cp]*2 [~ cp]*2 [~ cp]*2 [~ cp]*2>").bank("RolandTR909")\n$: sound("<[~ hh]*4 [~ hh]*4 [~ hh]*4 [~ oh ~ hh]>").bank("RolandTR909")\n  ._punchcard()',
+    hints: [
+      'The third bar rises to 8 before the final answer lands back on 4',
+      'The last bar begins on 7',
+    ],
+    constraints: { requiredStrings: ['<', '>', '.delay(.125)'] },
+    cycles: 4,
+  },
+  {
+    id: 'anthem-6',
+    chapter: 4,
+    levelInChapter: 6,
+    title: 'Breakdown and Fill',
+    description:
+      'Now give the track a real section change. In bars 5 and 6, drop out the kick and bass, thin the chords, and add a tom fill to pull us toward the return.',
+    type: 'completion',
+    targetCode: 'setcpm(124/4)\n$: n("<[~ 7 ~ 6] [4 ~ 3 ~] [~ 7 ~ 8] [7 ~ 4 ~] [~ 7 ~ ~] [8 ~ ~ ~] ~ ~>")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [4,6,8]] [~ [0,2,4] ~ ~] [~ [3,5,7] ~ ~] ~ ~>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3] [0 ~ 0 3] [0 ~ 6 5] ~ ~ ~ ~>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("<~ ~ ~ ~ ~ [lt mt ht ht] ~ ~>").bank("RolandTR909")\n$: sound("<bd*4 bd*4 bd*4 bd*4 ~ ~ ~ ~>").bank("RolandTR909")\n$: sound("<[~ cp]*2 [~ cp]*2 [~ cp]*2 [~ cp]*2 ~ ~ ~ ~>").bank("RolandTR909")\n$: sound("<[~ hh]*4 [~ hh]*4 [~ hh]*4 [~ oh ~ hh] [~ hh]*4 [~ hh]*4 ~ ~>").bank("RolandTR909")',
+    starterCode: '// a breakdown works because some layers disappear completely\n// bars 5 and 6 should clear space, then the toms should pull us forward\nsetcpm(124/4)\n$: n("<[~ 7 ~ 6] [4 ~ 3 ~] [~ 7 ~ 8] [7 ~ 4 ~] [~ 7 ~ ~] [8 ~ ~ ~] ~ ~>")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [4,6,8]] [~ [0,2,4] ~ ~] [~ [3,5,7] ~ ~] ~ ~>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3] [0 ~ 0 3] [0 ~ 6 5] _ _ ~ ~>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n  ._pianoroll()\n$: sound("<~ ~ ~ ~ ~ [~ ~ ~ ~] ~ ~>").bank("RolandTR909")\n  ._punchcard()\n$: sound("<bd*4 bd*4 bd*4 bd*4 ~ ~ ~ ~>").bank("RolandTR909")\n$: sound("<[~ cp]*2 [~ cp]*2 [~ cp]*2 [~ cp]*2 ~ ~ ~ ~>").bank("RolandTR909")\n$: sound("<[~ hh]*4 [~ hh]*4 [~ hh]*4 [~ oh ~ hh] [~ hh]*4 [~ hh]*4 ~ ~>").bank("RolandTR909")',
+    hints: [
+      'The bass should disappear entirely in bars 5 and 6',
+      'The fill happens in bar 6: lt, mt, ht, ht',
+    ],
+    constraints: { requiredStrings: ['lt', 'ht', '~ ~'] },
+    cycles: 8,
+  },
+  {
+    id: 'anthem-7',
+    chapter: 4,
+    levelInChapter: 7,
+    title: 'Hands in the Air',
+    description:
+      'Finish the anthem. Bring the groove back for bars 7 and 8, push the hook higher, vary the last bass bar, and drop a crash cymbal so the loop resets with confidence.',
+    type: 'completion',
+    targetCode: 'setcpm(124/4)\n$: n("<[~ 7 ~ 6] [4 ~ 3 ~] [~ 7 ~ 8] [7 ~ 4 ~] [~ 7 ~ ~] [8 ~ ~ ~] [~ 10 ~ 8] [7 ~ 6 ~]>")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [4,6,8]] [~ [0,2,4] ~ ~] [~ [3,5,7] ~ ~] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [4,6,8]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3] [0 ~ 0 3] [0 ~ 6 5] ~ ~ [0 ~ 5 3] [0 7 6 3]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n$: sound("<~ ~ ~ ~ ~ [lt mt ht ht] ~ ~>").bank("RolandTR909")\n$: sound("<bd*4 bd*4 bd*4 bd*4 ~ ~ bd*4 bd*4>").bank("RolandTR909")\n$: sound("<[~ cp]*2 [~ cp]*2 [~ cp]*2 [~ cp]*2 ~ ~ [~ cp]*2 [~ cp]*2>").bank("RolandTR909")\n$: sound("<[~ hh]*4 [~ hh]*4 [~ hh]*4 [~ oh ~ hh] [~ hh]*4 [~ hh]*4 [~ hh]*4 [cr ~ oh hh]>").bank("RolandTR909")',
+    starterCode: '// bring the anthem home: bars 7 and 8 return full and reach higher\n// the last two bars need a stronger melody, a returning bass, and a crash\nsetcpm(124/4)\n$: n("<[~ 7 ~ 6] [4 ~ 3 ~] [~ 7 ~ 8] [7 ~ 4 ~] [~ 7 ~ ~] [8 ~ ~ ~] [~ ~ ~ ~] [~ ~ ~ ~]>")\n  .scale("C5:minor").sound("square").delay(.125).gain(.3)\n  ._pianoroll()\n$: n("<[~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [0,2,4]] [~ [5,7,9] ~ [4,6,8]] [~ [0,2,4] ~ ~] [~ [3,5,7] ~ ~] [~ [5,7,9] ~ [3,5,7]] [~ [0,2,4] ~ [4,6,8]]>")\n  .scale("C4:minor").sound("triangle").room(.2).gain(.35)\n$: n("<[0 ~ 0 3] [0 ~ 5 3] [0 ~ 0 3] [0 ~ 6 5] ~ ~ [~ ~ ~ ~] [~ ~ ~ ~]>")\n  .scale("C2:minor").sound("sawtooth").lpf(700)\n  ._pianoroll()\n$: sound("<~ ~ ~ ~ ~ [lt mt ht ht] ~ ~>").bank("RolandTR909")\n  ._punchcard()\n$: sound("<bd*4 bd*4 bd*4 bd*4 ~ ~ bd*4 bd*4>").bank("RolandTR909")\n$: sound("<[~ cp]*2 [~ cp]*2 [~ cp]*2 [~ cp]*2 ~ ~ [~ cp]*2 [~ cp]*2>").bank("RolandTR909")\n$: sound("<[~ hh]*4 [~ hh]*4 [~ hh]*4 [~ oh ~ hh] [~ hh]*4 [~ hh]*4 [~ hh]*4 [~ ~ oh hh]>").bank("RolandTR909")\n  ._punchcard()',
+    hints: [
+      'The return starts higher on 10 before falling back to 8 and 6',
+      'The last bass bar is fuller: 0 7 6 3',
+      'Use cr for the final crash cymbal',
+    ],
+    constraints: { requiredStrings: ['cr', '.delay(.125)', '.sound("square")'] },
+    cycles: 8,
   },
 ];

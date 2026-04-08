@@ -294,6 +294,36 @@ export async function preloadSounds(code: string): Promise<void> {
 }
 
 /**
+ * Preload a fixed list of sounds, optionally scoped to a banked sample set.
+ * This is useful for UI palettes like drum pads where we know the exact sounds
+ * that should be ready before the user triggers them.
+ */
+export async function preloadNamedSounds(soundIds: string[], bank = ''): Promise<void> {
+  try {
+    await ensureInit();
+    const seen = new Set<string>();
+    const loads: Promise<unknown>[] = [];
+
+    for (const soundId of soundIds) {
+      const key = bank ? `${bank}_${soundId}` : soundId;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const sound = getSound(key);
+      if (sound?.data?.samples) {
+        loads.push(
+          getSampleBuffer({ s: key, n: 0, speed: 1 }, sound.data.samples).catch(() => {}),
+        );
+      }
+    }
+
+    await Promise.all(loads);
+  } catch {
+    // Preloading is best-effort; don't block or error the UI
+  }
+}
+
+/**
  * Extract the list of hap events from a Strudel pattern for the given
  * number of cycles. Each hap has { value, whole: { begin, end } }.
  */

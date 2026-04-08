@@ -5,7 +5,6 @@ interface LevelSelectProps {
   onJam: () => void;
   isCompleted: (levelId: string) => boolean;
   getBestScore: (levelId: string) => number;
-  isChapterUnlocked: (chapter: number) => boolean;
 }
 
 export default function LevelSelect({
@@ -13,7 +12,6 @@ export default function LevelSelect({
   onJam,
   isCompleted,
   getBestScore,
-  isChapterUnlocked,
 }: LevelSelectProps) {
   return (
     <div className="level-select">
@@ -30,7 +28,6 @@ export default function LevelSelect({
 
       <div className="chapters">
         {chapters.map((chapter) => {
-          const unlocked = isChapterUnlocked(chapter.id);
           const chapterLevels = levels.filter((l) => l.chapter === chapter.id);
           const completedCount = chapterLevels.filter((l) =>
             isCompleted(l.id),
@@ -39,7 +36,7 @@ export default function LevelSelect({
           return (
             <section
               key={chapter.id}
-              className={`chapter-card ${unlocked ? '' : 'chapter-locked'}`}
+              className="chapter-card"
             >
               <div className="chapter-header">
                 <h2>
@@ -52,42 +49,34 @@ export default function LevelSelect({
                 </span>
               </div>
 
-              {!unlocked && (
-                <p className="locked-msg">
-                  // complete 3 levels from the previous chapter to unlock
-                </p>
-              )}
+              <div className="level-grid">
+                {chapterLevels.map((level) => {
+                  const done = isCompleted(level.id);
+                  const score = getBestScore(level.id);
+                  const typeTag =
+                    level.type === 'completion'
+                      ? 'fill'
+                      : level.type === 'recreate'
+                        ? 'ear'
+                        : 'free';
 
-              {unlocked && (
-                <div className="level-grid">
-                  {chapterLevels.map((level) => {
-                    const done = isCompleted(level.id);
-                    const score = getBestScore(level.id);
-                    const typeTag =
-                      level.type === 'completion'
-                        ? 'fill'
-                        : level.type === 'recreate'
-                          ? 'ear'
-                          : 'free';
-
-                    return (
-                      <button
-                        key={level.id}
-                        className={`level-card ${done ? 'level-done' : ''}`}
-                        onClick={() => onSelectLevel(level.id)}
-                      >
-                        <span className="level-num">
-                          {level.chapter}.{level.levelInChapter} {typeTag}
-                        </span>
-                        <span className="level-title">{level.title}</span>
-                        {done && (
-                          <span className="level-score">{score}%</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+                  return (
+                    <button
+                      key={level.id}
+                      className={`level-card ${done ? 'level-done' : ''}`}
+                      onClick={() => onSelectLevel(level.id)}
+                    >
+                      <span className="level-num">
+                        {level.chapter}.{level.levelInChapter} {typeTag}
+                      </span>
+                      <span className="level-title">{level.title}</span>
+                      {done && (
+                        <span className="level-score">{score}%</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </section>
           );
         })}

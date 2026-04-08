@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { evaluate, hush, getSound } from '@strudel/web';
-import { ensureInit } from '../engine/strudel';
+import { ensureInit, preloadNamedSounds } from '../engine/strudel';
 
 const STORAGE_KEY = 'algorythm_drum_expr';
 const DEFAULT_EXPR = 'sound(":sound:").bank("RolandTR909")';
@@ -35,6 +35,16 @@ function isSoundAvailable(soundId: string, bank: string): boolean {
   }
 }
 
+function getAvailableSounds(bank: string): Set<string> {
+  const avail = new Set<string>();
+  for (const sound of DRUM_SOUNDS) {
+    if (isSoundAvailable(sound.id, bank)) {
+      avail.add(sound.id);
+    }
+  }
+  return avail;
+}
+
 interface DrumPadsProps {
   active: boolean;
   /** Called when a pad is pressed — parent should stop any running pattern. */
@@ -49,41 +59,50 @@ export default function DrumPads({ active, onNotePlay }: DrumPadsProps) {
   const [error, setError] = useState<string | null>(null);
   const initRef = useRef(false);
   const playingRef = useRef(false);
+  const preloadRef = useRef<Promise<void> | null>(null);
 
   // Determine which pads are available based on the current bank in the expression
-  const bank = useMemo(() => extractBank(expression), [expression]);
+  const bank = extractBank(expression);
   const [available, setAvailable] = useState<Set<string>>(new Set(DRUM_SOUNDS.map((s) => s.id)));
-
-  // Re-check availability when bank or init state changes
-  useEffect(() => {
-    if (!initRef.current) return;
-    const avail = new Set<string>();
-    for (const s of DRUM_SOUNDS) {
-      if (isSoundAvailable(s.id, bank)) avail.add(s.id);
-    }
-    setAvailable(avail);
-  }, [bank]);
-
-  // Also check after first init
-  const checkAvailability = useCallback(() => {
-    const avail = new Set<string>();
-    for (const s of DRUM_SOUNDS) {
-      if (isSoundAvailable(s.id, bank)) avail.add(s.id);
-    }
-    setAvailable(avail);
-  }, [bank]);
 
   // Persist expression
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, expression);
   }, [expression]);
 
+  useEffect(() => {
+    if (!active || !expression.includes(':sound:')) return;
+
+    let cancelled = false;
+    const preloadTask = (async () => {
+      await ensureInit();
+      initRef.current = true;
+      await preloadNamedSounds(DRUM_SOUNDS.map((sound) => sound.id), bank);
+      if (!cancelled) {
+        setAvailable(getAvailableSounds(bank));
+      }
+    })();
+
+    preloadRef.current = preloadTask;
+
+    return () => {
+      cancelled = true;
+      if (preloadRef.current === preloadTask) {
+        preloadRef.current = null;
+      }
+    };
+  }, [active, expression, bank]);
+
   const handlePointerDown = useCallback(
     async (soundId: string) => {
+      if (preloadRef.current) {
+        await preloadRef.current;
+      }
+
       if (!initRef.current) {
         await ensureInit();
         initRef.current = true;
-        checkAvailability();
+        setAvailable(getAvailableSounds(bank));
       }
 
       onNotePlay?.();
@@ -100,7 +119,7 @@ export default function DrumPads({ active, onNotePlay }: DrumPadsProps) {
         setActivePad(null);
       }
     },
-    [expression, onNotePlay, checkAvailability],
+    [expression, onNotePlay, bank],
   );
 
   // Global pointer-up listener so releasing outside a pad still stops

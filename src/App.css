@@ -124,10 +124,6 @@
   padding: 24px 0;
 }
 
-.chapter-card.chapter-locked {
-  opacity: 0.35;
-}
-
 .chapter-header {
   margin-bottom: 16px;
 }
@@ -163,13 +159,6 @@
   background: transparent;
   padding: 0;
   border-radius: 0;
-}
-
-.locked-msg {
-  color: var(--text-dim);
-  font-size: 12px;
-  text-align: left;
-  padding: 12px 0;
 }
 
 .level-grid {

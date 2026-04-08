@@ -75,25 +75,6 @@ export function useProgress() {
     });
   }, []);
 
-  const isChapterUnlocked = useCallback(
-    (chapter: number) => {
-      if (chapter <= 1) return true;
-      // A chapter is unlocked if the previous chapter's last level is completed
-      // We check if any level from the previous chapter is completed
-      // More precisely: at least 3 of 5 levels from previous chapter
-      const prevChapterLevels = Object.entries(progress.levels).filter(
-        ([key]) => {
-          // level ids follow pattern: beat-1..5, note-1..5, fx-1..5
-          const prefixes: Record<number, string> = { 1: 'beat-', 2: 'note-', 3: 'fx-' };
-          return key.startsWith(prefixes[chapter - 1] ?? '');
-        },
-      );
-      const completedCount = prevChapterLevels.filter(([, v]) => v.completed).length;
-      return completedCount >= 3;
-    },
-    [progress],
-  );
-
   const resetProgress = useCallback(() => {
     setProgress({ levels: {} });
   }, []);
@@ -103,7 +84,6 @@ export function useProgress() {
     isCompleted,
     getBestScore,
     markCompleted,
-    isChapterUnlocked,
     resetProgress,
   };
 }

@@ -21,7 +21,7 @@ function isJamPath(): boolean {
 export default function App() {
   const [currentLevelId, setCurrentLevelId] = useState<string | null>(levelIdFromPath);
   const [showJam, setShowJam] = useState(isJamPath);
-  const { isCompleted, getBestScore, markCompleted, isChapterUnlocked } = useProgress();
+  const { isCompleted, getBestScore, markCompleted } = useProgress();
 
   // Sync with browser back/forward
   useEffect(() => {
@@ -99,7 +99,6 @@ export default function App() {
       onJam={handleJam}
       isCompleted={isCompleted}
       getBestScore={getBestScore}
-      isChapterUnlocked={isChapterUnlocked}
     />
   );
 }
